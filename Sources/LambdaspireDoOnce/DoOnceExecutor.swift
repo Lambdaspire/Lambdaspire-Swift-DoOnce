@@ -13,11 +13,11 @@ public actor DoOnceExecutor {
     
     public func execute<T: DoOnceTask>(_ t: T.Type) async {
         await execute(.init(describing: T.self)) {
-            await T.do(resolver)
+            await T.do($0)
         }
     }
     
-    public func execute(_ key: String, _ action: () async -> Void) async {
+    public func execute(_ key: String, _ action: (DependencyResolver) async -> Void) async {
         Log.debug("Task with key \(key) might be done if it hasn't already been done once.")
         
         if await storage.isDone(key) {
@@ -25,7 +25,7 @@ public actor DoOnceExecutor {
             return
         }
         
-        await action()
+        await action(resolver)
         
         Log.debug("Task with key \(key) was done once.")
         
