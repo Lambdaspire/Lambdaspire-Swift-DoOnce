@@ -12,20 +12,25 @@ public actor DoOnceExecutor {
     }
     
     public func execute<T: DoOnceTask>(_ t: T.Type) async {
+        await execute(.init(describing: T.self)) {
+            await T.do(resolver)
+        }
+    }
+    
+    public func execute(_ key: String, _ action: () async -> Void) async {
+        Log.debug("Task with key \(key) might be done if it hasn't already been done once.")
         
-        Log.debug("\(T.self) might be done if it hasn't already been done once.")
-        
-        if await storage.isDone(t) {
-            Log.debug("\(T.self) was not done as it has already been done once.")
+        if await storage.isDone(key) {
+            Log.debug("Task with key \(key) was not done as it has already been done once.")
             return
         }
         
-        await t.do(resolver)
+        await action()
         
-        Log.debug("\(T.self) was done once.")
+        Log.debug("Task with key \(key) was done once.")
         
-        await storage.markAsDone(t)
+        await storage.markAsDone(key)
         
-        Log.debug("\(T.self) was marked as done so that it is not done more than once.")
+        Log.debug("Task with key \(key) was marked as done so that it is not done more than once.")
     }
 }

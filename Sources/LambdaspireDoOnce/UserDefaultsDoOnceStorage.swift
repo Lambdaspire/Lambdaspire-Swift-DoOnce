@@ -10,15 +10,27 @@ public class UserDefaultsDoOnceStorage : DoOnceStorage {
     }
     
     public func isDone<T>(_ t: T.Type) async -> Bool where T : DoOnceTask {
-        userDefaults.bool(forKey: key(t))
+        await isDone(fullKey(t))
+    }
+    
+    public func isDone(_ key: String) async -> Bool {
+        userDefaults.bool(forKey: fullKey(key))
     }
     
     public func markAsDone<T>(_ t: T.Type) async where T : DoOnceTask {
-        userDefaults.setValue(true, forKey: key(t))
+        await markAsDone(fullKey(t))
+    }
+    
+    public func markAsDone(_ key: String) async {
+        userDefaults.setValue(true, forKey: fullKey(key))
     }
     
     public func clear<T>(_ t: T.Type) async where T : DoOnceTask {
-        userDefaults.removeObject(forKey: key(t))
+        await clear(fullKey(t))
+    }
+    
+    public func clear(_ key: String) async {
+        userDefaults.removeObject(forKey: fullKey(key))
     }
     
     public func clear() async {
@@ -33,5 +45,6 @@ public class UserDefaultsDoOnceStorage : DoOnceStorage {
     
     private var keyPrefix: String = .init(describing: UserDefaultsDoOnceStorage.self)
     
-    private func key<T>(_ : T.Type) -> String { "\(keyPrefix).\(String(describing: T.self))" }
+    private func fullKey<T>(_ : T.Type) -> String { fullKey(String(describing: T.self)) }
+    private func fullKey(_ key: String) -> String { "\(keyPrefix).\(key)" }
 }

@@ -37,6 +37,22 @@ final class LambdaspireDoOnceTests: XCTestCase {
         
         XCTAssertEqual(counter.count, 2)
         
+        await executorA.execute("IncrementCountTask") { counter.increment() }
+        
+        XCTAssertEqual(counter.count, 2)
+        
+        await executorB.execute("IncrementCountTask") { counter.increment() }
+        
+        XCTAssertEqual(counter.count, 2)
+        
+        await executorA.execute("IncrementCountTask-\(UUID())") { counter.increment() }
+        
+        XCTAssertEqual(counter.count, 3)
+        
+        await executorB.execute("IncrementCountTask-\(UUID())") { counter.increment() }
+        
+        XCTAssertEqual(counter.count, 4)
+        
         await storageA.clear()
         await storageB.clear()
     }

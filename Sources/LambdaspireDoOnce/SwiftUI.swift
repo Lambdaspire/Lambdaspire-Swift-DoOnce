@@ -54,7 +54,10 @@ class FailResolver : DependencyResolver {
 
 class FailStorage : DoOnceStorage {
     func isDone<T>(_ t: T.Type) async -> Bool where T : DoOnceTask { fatalError("Please use a real DoOnceStorage.") }
+    func isDone(_ key: String) async -> Bool { fatalError("Please use a real DoOnceStorage.") }
     func markAsDone<T>(_ t: T.Type) async where T : DoOnceTask { fatalError("Please use a real DoOnceStorage.") }
+    func markAsDone(_ key: String) async { fatalError("Please use a real DoOnceStorage.") }
     func clear<T>(_ t: T.Type) async where T : DoOnceTask { fatalError("Please use a real DoOnceStorage.") }
+    func clear(_ key: String) async { fatalError("Please use a real DoOnceStorage.") }
     func clear() async { fatalError("Please use a real DoOnceStorage.") }
 }
