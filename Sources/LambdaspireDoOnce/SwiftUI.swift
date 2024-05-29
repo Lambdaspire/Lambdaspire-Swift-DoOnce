@@ -5,7 +5,11 @@ import LambdaspireAbstractions
 public extension View {
     
     func doOnce<T: DoOnceTask>(_ t: T.Type) -> some View {
-        modifier(DoOnceModifier<T>())
+        modifier(DoOnceModifierWithType<T>())
+    }
+    
+    func doOnce(_ key: String, _ action: @escaping (DependencyResolver) async -> Void) -> some View {
+        modifier(DoOnceModifierWithStringKey(key: key, action: action))
     }
     
     func doOnce(configuration: DoOnceConfiguration) -> some View {
@@ -22,7 +26,22 @@ public struct DoOnceConfiguration {
     }
 }
 
-struct DoOnceModifier<T: DoOnceTask> : ViewModifier {
+struct DoOnceModifierWithStringKey : ViewModifier {
+    
+    var key: String
+    var action: (DependencyResolver) async -> Void
+    
+    @Environment(\.doOnceExecutor) private var executor
+    
+    func body(content: Content) -> some View {
+        content
+            .task {
+                await executor.execute(key, action)
+            }
+    }
+}
+
+struct DoOnceModifierWithType<T: DoOnceTask> : ViewModifier {
     
     @Environment(\.doOnceExecutor) private var executor
     
