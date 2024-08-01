@@ -9,10 +9,14 @@ final class LambdaspireDoOnceTests: XCTestCase {
     
     func testDoOnceExecutorDoesIndeedDoOnceOnlyPerStorage() async throws {
         
-        let serviceLocator: ServiceLocator = .init()
+        let builder: ContainerBuilder = .init()
         
-        let counter: Counter = .init()
-        serviceLocator.register(counter)
+        builder.singleton(Counter.self)
+        builder.transient(IncrementCountTask.self)
+        
+        let container = builder.build()
+        
+        let counter: Counter = container.resolve()
         
         let userDefaultsA: UserDefaults = .init(suiteName: "Test-A-\(UUID())")!
         let userDefaultsB: UserDefaults = .init(suiteName: "Test-B-\(UUID())")!
@@ -20,8 +24,8 @@ final class LambdaspireDoOnceTests: XCTestCase {
         let storageA: UserDefaultsDoOnceStorage = .init(userDefaultsA)
         let storageB: UserDefaultsDoOnceStorage = .init(userDefaultsB)
         
-        let executorA: DoOnceExecutor = .init(resolver: serviceLocator, storage: storageA)
-        let executorB: DoOnceExecutor = .init(resolver: serviceLocator, storage: storageB)
+        let executorA: DoOnceExecutor = .init(scope: container, storage: storageA)
+        let executorB: DoOnceExecutor = .init(scope: container, storage: storageB)
         
         XCTAssertEqual(counter.count, 0)
         
@@ -41,7 +45,7 @@ final class LambdaspireDoOnceTests: XCTestCase {
         
         XCTAssertEqual(counter.count, 2)
         
-        await executorB.execute("IncrementCountTask") { _ in counter.increment() }
+        await executorB.execute("IncrementCountTask") { s in s.resolve(Counter.self).increment() }
         
         XCTAssertEqual(counter.count, 2)
         
@@ -49,11 +53,11 @@ final class LambdaspireDoOnceTests: XCTestCase {
         
         XCTAssertEqual(counter.count, 3)
         
-        await executorB.execute("IncrementCountTask-\(UUID())") { _ in counter.increment() }
+        await executorB.execute("IncrementCountTask-\(UUID())") { s in s.resolve(Counter.self).increment() }
         
         XCTAssertEqual(counter.count, 4)
         
-        await executorB.execute("IncrementCountTask-\(UUID())") { resolver in resolver.resolve(Counter.self).increment() }
+        await executorB.execute("IncrementCountTask-\(UUID())") { s in s.resolve(Counter.self).increment() }
         
         XCTAssertEqual(counter.count, 5)
         
@@ -62,6 +66,7 @@ final class LambdaspireDoOnceTests: XCTestCase {
     }
 }
 
+@Resolvable
 class Counter {
     var count: Int = 0
     
@@ -70,8 +75,16 @@ class Counter {
     }
 }
 
+@Resolvable
 class IncrementCountTask : DoOnceTask {
-    static func `do`(_ resolver: any DependencyResolver) async {
-        resolver.resolve(Counter.self).increment()
+    
+    private let counter: Counter
+    
+    init(counter: Counter) {
+        self.counter = counter
+    }
+    
+    func run() async {
+        counter.increment()
     }
 }

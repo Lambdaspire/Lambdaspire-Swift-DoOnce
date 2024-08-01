@@ -61,14 +61,20 @@ public extension EnvironmentValues {
 }
 
 struct DoOnceExecutorKey : EnvironmentKey {
-    static let defaultValue: DoOnceExecutor = .init(resolver: FailResolver(), storage: FailStorage())
+    static let defaultValue: DoOnceExecutor = .init(scope: FailScope(), storage: FailStorage())
 }
 
-// Could enforce reasonable defaults, but it woudl require a package dependency for a concrete DependencyResolver.
+// Could enforce reasonable defaults, but it would require a package dependency for a concrete DependencyResolver.
 
-class FailResolver : DependencyResolver {
-    func resolve<T>() -> T { fatalError("Please use a real DependencyResolver.") }
-    func resolve<T>(_ t: T.Type) -> T { fatalError("Please use a real DependencyResolver.") }
+class FailScope : DependencyResolutionScope {
+    
+    var id: String { "" }
+    
+    func scope() -> any DependencyResolutionScope { self }
+    
+    func tryResolve<C>() -> C? { nil }
+    
+    func resolve<C>() -> C { fatalError() }
 }
 
 class FailStorage : DoOnceStorage {

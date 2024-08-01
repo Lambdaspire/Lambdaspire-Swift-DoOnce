@@ -3,21 +3,21 @@ import LambdaspireAbstractions
 
 public actor DoOnceExecutor {
     
-    private let resolver: DependencyResolver
+    private let scope: DependencyResolutionScope
     private let storage: DoOnceStorage
     
-    public init(resolver: DependencyResolver, storage: DoOnceStorage) {
-        self.resolver = resolver
+    public init(scope: DependencyResolutionScope, storage: DoOnceStorage) {
+        self.scope = scope
         self.storage = storage
     }
     
     public func execute<T: DoOnceTask>(_ t: T.Type) async {
-        await execute(.init(describing: T.self)) {
-            await T.do($0)
+        await execute(.init(describing: T.self)) { scope in
+            await (scope.resolve() as T).run()
         }
     }
     
-    public func execute(_ key: String, _ action: (DependencyResolver) async -> Void) async {
+    public func execute(_ key: String, _ action: (DependencyResolutionScope) async -> Void) async {
         Log.debug("Task with key \(key) might be done if it hasn't already been done once.")
         
         if await storage.isDone(key) {
@@ -25,7 +25,7 @@ public actor DoOnceExecutor {
             return
         }
         
-        await action(resolver)
+        await action(scope)
         
         Log.debug("Task with key \(key) was done once.")
         
