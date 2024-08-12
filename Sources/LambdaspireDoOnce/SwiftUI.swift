@@ -15,6 +15,10 @@ public extension View {
     func doOnce(configuration: DoOnceConfiguration) -> some View {
         environment(\.doOnceExecutor, configuration.executor)
     }
+    
+    func doOnce(from scope: any DependencyResolutionScope) -> some View {
+        environment(\.doOnceExecutor, scope.resolve())
+    }
 }
 
 public struct DoOnceConfiguration {
