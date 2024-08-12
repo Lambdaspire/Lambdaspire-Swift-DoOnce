@@ -9,22 +9,29 @@ final class LambdaspireDoOnceTests: XCTestCase {
     
     func testDoOnceExecutorDoesIndeedDoOnceOnlyPerStorage() async throws {
         
+        let userDefaultsA: UserDefaults = .init(suiteName: "Test-A-\(UUID())")!
+        let userDefaultsB: UserDefaults = .init(suiteName: "Test-B-\(UUID())")!
+        
         let builder: ContainerBuilder = .init()
         
         builder.singleton(Counter.self)
-        builder.transient(IncrementCountTask.self)
+        
+        builder
+            .doOnce()
+            .standard(
+                userDefaults: userDefaultsA,
+                tasks: [
+                    IncrementCountTask.self
+                ])
         
         let container = builder.build()
         
         let counter: Counter = container.resolve()
         
-        let userDefaultsA: UserDefaults = .init(suiteName: "Test-A-\(UUID())")!
-        let userDefaultsB: UserDefaults = .init(suiteName: "Test-B-\(UUID())")!
-        
-        let storageA: UserDefaultsDoOnceStorage = .init(userDefaultsA)
+        let storageA: DoOnceStorage = container.resolve()
         let storageB: UserDefaultsDoOnceStorage = .init(userDefaultsB)
         
-        let executorA: DoOnceExecutor = .init(scope: container, storage: storageA)
+        let executorA: DoOnceExecutor = container.resolve()
         let executorB: DoOnceExecutor = .init(scope: container, storage: storageB)
         
         XCTAssertEqual(counter.count, 0)

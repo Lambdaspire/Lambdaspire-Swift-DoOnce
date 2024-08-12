@@ -1,7 +1,7 @@
 
 import LambdaspireAbstractions
 
-public actor DoOnceExecutor {
+public actor DoOnceExecutor : Resolvable {
     
     private let scope: DependencyResolutionScope
     private let storage: DoOnceStorage
@@ -9,6 +9,10 @@ public actor DoOnceExecutor {
     public init(scope: DependencyResolutionScope, storage: DoOnceStorage) {
         self.scope = scope
         self.storage = storage
+    }
+    
+    public init(scope: any DependencyResolutionScope) {
+        self.init(scope: scope, storage: scope.resolve())
     }
     
     public func execute<T: DoOnceTask>(_ t: T.Type) async {

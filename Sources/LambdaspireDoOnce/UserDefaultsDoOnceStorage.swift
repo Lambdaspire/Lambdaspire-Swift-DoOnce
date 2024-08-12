@@ -1,12 +1,17 @@
 
 import Foundation
+import LambdaspireAbstractions
 
-public class UserDefaultsDoOnceStorage : DoOnceStorage {
+public class UserDefaultsDoOnceStorage : DoOnceStorage, Resolvable {
     
     private let userDefaults: UserDefaults
     
     public init(_ userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
+    }
+    
+    public required convenience init(scope: any DependencyResolutionScope) {
+        self.init()
     }
     
     public func isDone<T>(_ t: T.Type) async -> Bool where T : DoOnceTask {
